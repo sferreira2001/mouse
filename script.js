@@ -15,16 +15,16 @@ const STROKE_COLOR = "#000000";
 
 const STROKE_SIZE = 0.08;
 
-const BLOB_SPEED = 2;
+const BLOB_SPEED = 3;
 
 
 // responsive settings
 
 const MOBILE = window.innerWidth < 600;
 
-const BLOB_COUNT = MOBILE ? 8 : 15;
+const BLOB_COUNT = MOBILE ? 15 : 15;
 
-const SCALE = MOBILE ? 0.45 : 1;
+const SCALE = MOBILE ? 0.8 : 0.8;
 
 const FIELD_THRESHOLD = 1.2;
 
@@ -103,34 +103,37 @@ const colorF = hexToRgb(FUNDO_COLOR);
 // BLOBS
 // =============================
 
-const blobs=[];
+const blobs = [];
 
 
-const MIN_BLOB_SIZE = MOBILE ? 25 : 50;
-const MAX_BLOB_SIZE = MOBILE ? 70 : 140;
+const MIN_BLOB_SIZE = MOBILE ? 15 : 30;
+const MAX_BLOB_SIZE = MOBILE ? 45 : 100;
 
 
 
 for(let i=0;i<BLOB_COUNT;i++){
 
-    const radius =
+    const r =
     MIN_BLOB_SIZE +
-    Math.random()*MAX_BLOB_SIZE;
+    Math.random() * MAX_BLOB_SIZE;
 
 
     blobs.push({
 
-        x:Math.random()*buffer.width,
-        y:Math.random()*buffer.height,
+    x:Math.random()*buffer.width,
+    y:Math.random()*buffer.height,
 
-        vx:(Math.random()-.5)*0.8,
-        vy:(Math.random()-.5)*0.8,
+    vx:(Math.random()-.5)*0.8,
+    vy:(Math.random()-.5)*0.8,
 
-        r:radius,
+    r:r*SCALE,
 
-        r2:radius*radius
+    r2:(r*SCALE)*(r*SCALE),
 
-    });
+    targetX:null,
+    targetY:null
+
+});
 
 }
 
@@ -156,13 +159,23 @@ updateRadius();
 // INTERACTION
 // =============================
 
-let mouse={
+let mouse = {
     x:0,
     y:0
 };
 
+let previousMouse = {
+    x:0,
+    y:0
+};
 
-let dragging=null;
+let dragging = null;
+
+
+let releaseVelocity = {
+    x:0,
+    y:0
+};
 
 
 
@@ -172,31 +185,40 @@ function updatePointer(x,y){
 
 
     mouse.x =
-    ((x-rect.left)/rect.width)
-    *buffer.width;
+    ((x - rect.left) / rect.width)
+    * buffer.width;
 
 
     mouse.y =
-    ((y-rect.top)/rect.height)
-    *buffer.height;
+    ((y - rect.top) / rect.height)
+    * buffer.height;
 
 
 
-    if(dragging!==null){
+    if(dragging !== null){
 
-        const b=blobs[dragging];
-
-
-        // momentum from dragging
-
-        b.vx=(mouse.x-b.x)*0.12;
-        b.vy=(mouse.y-b.y)*0.12;
+        const b = blobs[dragging];
 
 
-        // smooth follow
+        // calculate throw velocity
 
-        b.x += (mouse.x-b.x)*0.35;
-        b.y += (mouse.y-b.y)*0.35;
+        releaseVelocity.x =
+        mouse.x - previousMouse.x;
+
+
+        releaseVelocity.y =
+        mouse.y - previousMouse.y;
+
+
+
+        // smooth dragging
+
+        b.x += (mouse.x - b.x) * 0.35;
+        b.y += (mouse.y - b.y) * 0.35;
+
+
+        previousMouse.x = mouse.x;
+        previousMouse.y = mouse.y;
 
     }
 
@@ -204,22 +226,25 @@ function updatePointer(x,y){
 
 
 
+
+
 function startDrag(){
 
-    let best=Infinity;
+    let best = Infinity;
 
 
     blobs.forEach((b,i)=>{
 
-        const d=Math.hypot(
+
+        const d = Math.hypot(
             mouse.x-b.x,
             mouse.y-b.y
         );
 
 
         if(
-            d<b.r*1.5 &&
-            d<best
+            d < b.r * 1.5 &&
+            d < best
         ){
 
             best=d;
@@ -229,17 +254,39 @@ function startDrag(){
 
     });
 
+
+
+    if(dragging !== null){
+
+        previousMouse.x = mouse.x;
+        previousMouse.y = mouse.y;
+
+    }
+
 }
+
+
 
 
 
 function stopDrag(){
 
+    if(dragging !== null){
+
+        const b = blobs[dragging];
+
+
+        // throw blob
+
+        b.vx = releaseVelocity.x * 0.5;
+        b.vy = releaseVelocity.y * 0.5;
+
+    }
+
+
     dragging=null;
 
 }
-
-
 
 // mouse
 
@@ -322,10 +369,6 @@ canvas.addEventListener(
 ()=>{
     stopDrag();
 });
-// =============================
-// PHYSICS
-// =============================
-
 function physics(){
 
     blobs.forEach((b,i)=>{
@@ -333,34 +376,34 @@ function physics(){
 
         if(i !== dragging){
 
-
             b.x += b.vx * BLOB_SPEED;
             b.y += b.vy * BLOB_SPEED;
-
-
-            // friction / momentum loss
-
-            b.vx *= 0.985;
-            b.vy *= 0.985;
-
-
-
-            // prevent complete freezing
-
-            if(Math.abs(b.vx)<0.03)
-                b.vx += (Math.random()-0.5)*0.01;
-
-
-            if(Math.abs(b.vy)<0.03)
-                b.vy += (Math.random()-0.5)*0.01;
-
 
         }
 
 
+        // friction
+        b.vx *= 0.985;
+        b.vy *= 0.985;
 
-        // left wall
 
+
+        // minimum movement
+        const minVelocity = 0.15;
+
+
+        if(Math.abs(b.vx) < minVelocity){
+            b.vx = b.vx < 0 ? -minVelocity : minVelocity;
+        }
+
+
+        if(Math.abs(b.vy) < minVelocity){
+            b.vy = b.vy < 0 ? -minVelocity : minVelocity;
+        }
+
+
+
+        // walls
         if(b.x < b.r){
 
             b.x = b.r;
@@ -368,9 +411,6 @@ function physics(){
 
         }
 
-
-
-        // right wall
 
         if(b.x > buffer.width-b.r){
 
@@ -380,9 +420,6 @@ function physics(){
         }
 
 
-
-        // top wall
-
         if(b.y < b.r){
 
             b.y = b.r;
@@ -390,9 +427,6 @@ function physics(){
 
         }
 
-
-
-        // bottom wall
 
         if(b.y > buffer.height-b.r){
 
@@ -405,7 +439,6 @@ function physics(){
     });
 
 }
-
 
 
 

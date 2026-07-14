@@ -15,7 +15,7 @@ const STROKE_COLOR = "#000000";
 const STROKE_SIZE = 0.08;
 
 // velocidade das blobs
-const BLOB_SPEED = 2;
+const BLOB_SPEED = 1.4;
 
 
 // resolução interna
@@ -84,7 +84,7 @@ const colorF = hexToRgb(FUNDO_COLOR);
 
 const blobs = [];
 
-for (let i = 0; i < 15; i++) {
+for (let i = 0; i < 10; i++) {
 
     blobs.push({
 

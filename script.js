@@ -320,51 +320,7 @@ canvas.addEventListener(
 
 // touch
 
-canvas.addEventListener(
-"touchstart",
-e=>{
 
-    e.preventDefault();
-
-    const t=e.touches[0];
-
-    updatePointer(
-        t.clientX,
-        t.clientY
-    );
-
-    startDrag();
-
-},
-{
-    passive:false
-});
-
-
-canvas.addEventListener(
-"touchmove",
-e=>{
-
-    e.preventDefault();
-
-    const t=e.touches[0];
-
-    updatePointer(
-        t.clientX,
-        t.clientY
-    );
-
-},
-{
-    passive:false
-});
-
-
-canvas.addEventListener(
-"touchend",
-()=>{
-    stopDrag();
-});
 function physics(){
 
     blobs.forEach((b,i)=>{

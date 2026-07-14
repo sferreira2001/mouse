@@ -2,24 +2,26 @@ const canvas = document.getElementById("canvas");
 const ctx = canvas.getContext("2d");
 
 
-// cores das blobs
+// =============================
+// SETTINGS
+// =============================
+
 const BLOB_COLOR_A = "#ff00ea";
 const BLOB_COLOR_B = "#ff0055";
 
 const FUNDO_COLOR = "#f8b842";
 
-// cor do stroke
 const STROKE_COLOR = "#000000";
 
-// espessura do stroke
 const STROKE_SIZE = 0.08;
 
-// velocidade das blobs
-const BLOB_SPEED = 1.4;
+const BLOB_SPEED = 2;
 
+const BLOB_COUNT = 15;
 
-// resolução interna
-const scale = 0.8;
+const SCALE = 0.8;
+
+const FIELD_THRESHOLD = 1.2;
 
 
 
@@ -28,28 +30,32 @@ const bctx = buffer.getContext("2d");
 
 
 
-function resize() {
+function resize(){
 
     canvas.width = innerWidth;
     canvas.height = innerHeight;
 
-    buffer.width = Math.floor(canvas.width * scale);
-    buffer.height = Math.floor(canvas.height * scale);
+    buffer.width = Math.floor(canvas.width*SCALE);
+    buffer.height = Math.floor(canvas.height*SCALE);
 
     ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    ctx.imageSmoothingQuality="high";
 
 }
 
 resize();
-addEventListener("resize", resize);
+addEventListener("resize",resize);
 
 
 
-// converter hex para rgb
+
+// =============================
+// COLORS
+// =============================
+
 function hexToRgb(hex){
 
-    hex = hex.replace("#","");
+    hex=hex.replace("#","");
 
     return {
         r:parseInt(hex.substring(0,2),16),
@@ -60,49 +66,75 @@ function hexToRgb(hex){
 }
 
 
-// mistura de cores
+
 function mixColor(a,b,t){
 
     return {
-
         r:a.r+(b.r-a.r)*t,
         g:a.g+(b.g-a.g)*t,
         b:a.b+(b.b-a.b)*t
-
     };
 
 }
 
 
-const colorA = hexToRgb(BLOB_COLOR_A);
-const colorB = hexToRgb(BLOB_COLOR_B);
-const stroke = hexToRgb(STROKE_COLOR);
+const colorA=hexToRgb(BLOB_COLOR_A);
+const colorB=hexToRgb(BLOB_COLOR_B);
 
-const colorF = hexToRgb(FUNDO_COLOR);
+const stroke=hexToRgb(STROKE_COLOR);
+
+const colorF=hexToRgb(FUNDO_COLOR);
 
 
 
-const blobs = [];
 
-for (let i = 0; i < 10; i++) {
+// =============================
+// BLOBS
+// =============================
+
+const blobs=[];
+
+
+for(let i=0;i<BLOB_COUNT;i++){
 
     blobs.push({
 
-        x: Math.random() * buffer.width,
-        y: Math.random() * buffer.height,
+        x:Math.random()*buffer.width,
+        y:Math.random()*buffer.height,
 
         vx:(Math.random()-.5)*0.8,
         vy:(Math.random()-.5)*0.8,
 
-        r:20+Math.random()*60
+        r:30+Math.random()*100,
+
+        r2:0
 
     });
 
 }
 
 
+// precompute radius squared
 
-let mouse = {
+function updateRadius(){
+
+    blobs.forEach(b=>{
+        b.r2=b.r*b.r;
+    });
+
+}
+
+updateRadius();
+
+
+
+
+
+// =============================
+// MOUSE
+// =============================
+
+let mouse={
     x:0,
     y:0
 };
@@ -114,20 +146,16 @@ let dragging=null;
 
 canvas.onmousemove=e=>{
 
-
-    mouse.x=e.clientX*scale;
-    mouse.y=e.clientY*scale;
-
+    mouse.x=e.clientX*SCALE;
+    mouse.y=e.clientY*SCALE;
 
 
     if(dragging!==null){
 
-        blobs[dragging].x +=
-        (mouse.x-blobs[dragging].x)*0.25;
+        let b=blobs[dragging];
 
-
-        blobs[dragging].y +=
-        (mouse.y-blobs[dragging].y)*0.25;
+        b.x+=(mouse.x-b.x)*0.25;
+        b.y+=(mouse.y-b.y)*0.25;
 
     }
 
@@ -142,8 +170,7 @@ canvas.onmousedown=()=>{
 
     blobs.forEach((b,i)=>{
 
-
-        let d=Math.hypot(
+        const d=Math.hypot(
             mouse.x-b.x,
             mouse.y-b.y
         );
@@ -159,7 +186,6 @@ canvas.onmousedown=()=>{
 
     });
 
-
 };
 
 
@@ -171,21 +197,22 @@ canvas.onmouseleave=()=>dragging=null;
 
 
 
-function physics(){
 
+// =============================
+// PHYSICS
+// =============================
+
+function physics(){
 
     blobs.forEach((b,i)=>{
 
 
         if(i!==dragging){
 
-
-            b.x += b.vx * BLOB_SPEED;
-            b.y += b.vy * BLOB_SPEED;
-
+            b.x+=b.vx*BLOB_SPEED;
+            b.y+=b.vy*BLOB_SPEED;
 
         }
-
 
 
         if(
@@ -195,7 +222,6 @@ function physics(){
             b.vx*=-1;
 
 
-
         if(
             b.y<b.r ||
             b.y>buffer.height-b.r
@@ -203,15 +229,18 @@ function physics(){
             b.vy*=-1;
 
 
-
     });
-
 
 }
 
 
 
 
+
+
+// =============================
+// DRAW
+// =============================
 
 function draw(){
 
@@ -226,75 +255,65 @@ function draw(){
 
 
 
-    // posição horizontal do rato controla a cor
-
-    const mouseMix =
-    Math.min(
-        1,
-        Math.max(
-            0,
-            mouse.x / buffer.width
+    const mouseMix=
+    Math.max(
+        0,
+        Math.min(
+            1,
+            mouse.x/buffer.width
         )
     );
 
 
-    const blobColor =
-    mixColor(
+    const blobColor=mixColor(
         colorA,
         colorB,
         mouseMix
     );
 
 
+    const width=buffer.width;
+
 
 
     for(let y=0;y<buffer.height;y++){
 
 
-        for(let x=0;x<buffer.width;x++){
-
+        for(let x=0;x<width;x++){
 
 
             let field=0;
 
 
 
-            for(const b of blobs){
+            for(let j=0;j<BLOB_COUNT;j++){
 
 
-                let dx=x-b.x;
-                let dy=y-b.y;
+                const b=blobs[j];
 
 
+                const dx=x-b.x;
+                const dy=y-b.y;
 
-                field +=
-                (b.r*b.r) /
-                (dx*dx+dy*dy+1);
+
+                // ignore far away blobs
+                const dist2=dx*dx+dy*dy;
+
+
+                field += 
+b.r2 /
+(dist2+1);
 
 
             }
 
 
 
-
-            let inside =
-            field > 1.2;
+            let i=(y*width+x)*4;
 
 
 
-            let outline =
-            field > (1.2-STROKE_SIZE)
-            &&
-            !inside;
-
-
-
-            let i =
-            (y*buffer.width+x)*4;
-
-
-
-            if(inside){
+            if(field>FIELD_THRESHOLD){
 
 
                 data[i]=blobColor.r;
@@ -303,7 +322,7 @@ function draw(){
 
 
             }
-            else if(outline){
+            else if(field>FIELD_THRESHOLD-STROKE_SIZE){
 
 
                 data[i]=stroke.r;
@@ -328,9 +347,7 @@ function draw(){
 
         }
 
-
     }
-
 
 
     bctx.putImageData(img,0,0);
@@ -359,17 +376,28 @@ function draw(){
 
 
 
+let lastPhysics=0;
 
-function animate(){
 
-    physics();
+function animate(time){
+
+
+    // physics at ~50fps
+    if(time-lastPhysics>20){
+
+        physics();
+
+        lastPhysics=time;
+
+    }
+
 
     draw();
+
 
     requestAnimationFrame(animate);
 
 }
 
 
-
-animate();
+requestAnimationFrame(animate);

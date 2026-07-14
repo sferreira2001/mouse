@@ -6,12 +6,12 @@ const ctx = canvas.getContext("2d");
 // SETTINGS
 // =============================
 
-const BLOB_COLOR_A = "#ff00ea";
-const BLOB_COLOR_B = "#ff0055";
+const BLOB_COLOR_A = "#725CAD";
+const BLOB_COLOR_B = "#725CAD";
 
-const FUNDO_COLOR = "#f8b842";
+const FUNDO_COLOR = "#8CCDEB";
 
-const STROKE_COLOR = "#000000";
+const STROKE_COLOR = "#0B1D51";
 
 const STROKE_SIZE = 0.08;
 

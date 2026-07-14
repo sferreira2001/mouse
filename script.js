@@ -33,21 +33,21 @@ const bctx = buffer.getContext("2d");
 
 function resize(){
 
-    canvas.width = innerWidth;
-    canvas.height = innerHeight;
+    const dpr = window.devicePixelRatio || 1;
 
+    canvas.width = innerWidth * dpr;
+    canvas.height = innerHeight * dpr;
 
-    buffer.width =
-    Math.floor(canvas.width*SCALE);
+    canvas.style.width = innerWidth + "px";
+    canvas.style.height = innerHeight + "px";
 
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    buffer.height =
-    Math.floor(canvas.height*SCALE);
+    buffer.width = Math.floor(innerWidth * SCALE);
+    buffer.height = Math.floor(innerHeight * SCALE);
 
-
-    ctx.imageSmoothingEnabled=true;
-    ctx.imageSmoothingQuality="high";
-
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
 }
 
 resize();

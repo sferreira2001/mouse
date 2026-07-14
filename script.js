@@ -1,171 +1,375 @@
-const renderer = new THREE.WebGLRenderer({
-    canvas: document.getElementById("canvas")
-});
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
 
-renderer.setSize(window.innerWidth, window.innerHeight);
 
-const scene = new THREE.Scene();
+// cores das blobs
+const BLOB_COLOR_A = "#ff00ea";
+const BLOB_COLOR_B = "#ff0055";
 
-const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+const FUNDO_COLOR = "#f8b842";
 
-const uniforms = {
+// cor do stroke
+const STROKE_COLOR = "#000000";
 
-    uTime: {
-        value: 0
-    },
+// espessura do stroke
+const STROKE_SIZE = 0.08;
 
-    uResolution: {
-        value: new THREE.Vector2(
-            window.innerWidth,
-            window.innerHeight
-        )
-    },
+// velocidade das blobs
+const BLOB_SPEED = 2;
 
-    uMouse: {
-        value: new THREE.Vector2(0.5, 0.5)
+
+// resolução interna
+const scale = 0.8;
+
+
+
+const buffer = document.createElement("canvas");
+const bctx = buffer.getContext("2d");
+
+
+
+function resize() {
+
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
+
+    buffer.width = Math.floor(canvas.width * scale);
+    buffer.height = Math.floor(canvas.height * scale);
+
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+
+}
+
+resize();
+addEventListener("resize", resize);
+
+
+
+// converter hex para rgb
+function hexToRgb(hex){
+
+    hex = hex.replace("#","");
+
+    return {
+        r:parseInt(hex.substring(0,2),16),
+        g:parseInt(hex.substring(2,4),16),
+        b:parseInt(hex.substring(4,6),16)
+    };
+
+}
+
+
+// mistura de cores
+function mixColor(a,b,t){
+
+    return {
+
+        r:a.r+(b.r-a.r)*t,
+        g:a.g+(b.g-a.g)*t,
+        b:a.b+(b.b-a.b)*t
+
+    };
+
+}
+
+
+const colorA = hexToRgb(BLOB_COLOR_A);
+const colorB = hexToRgb(BLOB_COLOR_B);
+const stroke = hexToRgb(STROKE_COLOR);
+
+const colorF = hexToRgb(FUNDO_COLOR);
+
+
+
+const blobs = [];
+
+for (let i = 0; i < 15; i++) {
+
+    blobs.push({
+
+        x: Math.random() * buffer.width,
+        y: Math.random() * buffer.height,
+
+        vx:(Math.random()-.5)*0.8,
+        vy:(Math.random()-.5)*0.8,
+
+        r:20+Math.random()*60
+
+    });
+
+}
+
+
+
+let mouse = {
+    x:0,
+    y:0
+};
+
+
+let dragging=null;
+
+
+
+canvas.onmousemove=e=>{
+
+
+    mouse.x=e.clientX*scale;
+    mouse.y=e.clientY*scale;
+
+
+
+    if(dragging!==null){
+
+        blobs[dragging].x +=
+        (mouse.x-blobs[dragging].x)*0.25;
+
+
+        blobs[dragging].y +=
+        (mouse.y-blobs[dragging].y)*0.25;
+
     }
 
 };
 
-const material = new THREE.ShaderMaterial({
 
-    uniforms,
 
-    vertexShader: `
+canvas.onmousedown=()=>{
 
-        void main() {
+    let best=Infinity;
 
-            gl_Position = vec4(position, 1.0);
+
+    blobs.forEach((b,i)=>{
+
+
+        let d=Math.hypot(
+            mouse.x-b.x,
+            mouse.y-b.y
+        );
+
+
+        if(d<b.r && d<best){
+
+            best=d;
+            dragging=i;
 
         }
 
-    `,
 
-   fragmentShader:`
+    });
 
-uniform vec2 uResolution;
-uniform vec2 uMouse;
-uniform float uTime;
 
-float hash(vec2 p){
-    return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);
-}
+};
 
-float noise(vec2 p){
 
-    vec2 i=floor(p);
-    vec2 f=fract(p);
 
-    f=f*f*(3.0-2.0*f);
+canvas.onmouseup=()=>dragging=null;
+canvas.onmouseleave=()=>dragging=null;
 
-    float a=hash(i);
-    float b=hash(i+vec2(1,0));
-    float c=hash(i+vec2(0,1));
-    float d=hash(i+vec2(1,1));
 
-    return mix(
-        mix(a,b,f.x),
-        mix(c,d,f.x),
-        f.y
-    );
 
-}
 
-void main(){
 
-    vec2 uv=gl_FragCoord.xy/uResolution;
+function physics(){
 
-    uv-=0.5;
 
-    uv.x*=uResolution.x/uResolution.y;
+    blobs.forEach((b,i)=>{
 
-    //----------------------------------
-    // mouse force
-    //----------------------------------
 
-    vec2 m=uMouse;
+        if(i!==dragging){
 
-    m-=0.5;
-    m.x*=uResolution.x/uResolution.y;
 
-    vec2 dir=uv-m;
+            b.x += b.vx * BLOB_SPEED;
+            b.y += b.vy * BLOB_SPEED;
 
-    float dist=length(dir);
 
-    uv+=normalize(dir)*0.25*exp(-dist*10.0);
+        }
 
-    //----------------------------------
-    // domain warp
-    //----------------------------------
 
-    uv+=0.25*vec2(
 
-        noise(uv*4.0+uTime*.15),
+        if(
+            b.x<b.r ||
+            b.x>buffer.width-b.r
+        )
+            b.vx*=-1;
 
-        noise(uv*4.0+20.0+uTime*.15)
 
-    )-.125;
 
-    //----------------------------------
-    // noise
+        if(
+            b.y<b.r ||
+            b.y>buffer.height-b.r
+        )
+            b.vy*=-1;
 
-    float n=noise(uv*10.0);
 
-    //----------------------------------
-    // silhouettes
 
-    n=step(.55,n);
+    });
 
-    //----------------------------------
-    // grain
-
-    n+=hash(gl_FragCoord.xy+uTime)*0.05;
-
-    gl_FragColor=vec4(vec3(n),1.0);
 
 }
-`
 
-});
 
-const mesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(2, 2),
-    material
-);
 
-scene.add(mesh);
 
-window.addEventListener("mousemove", (event) => {
 
-    uniforms.uMouse.value.set(
+function draw(){
 
-        event.clientX / window.innerWidth,
 
-        1.0 - event.clientY / window.innerHeight
-
+    const img=bctx.createImageData(
+        buffer.width,
+        buffer.height
     );
 
-});
 
-window.addEventListener("resize", () => {
+    const data=img.data;
 
-    renderer.setSize(window.innerWidth, window.innerHeight);
 
-    uniforms.uResolution.value.set(
-        window.innerWidth,
-        window.innerHeight
+
+    // posição horizontal do rato controla a cor
+
+    const mouseMix =
+    Math.min(
+        1,
+        Math.max(
+            0,
+            mouse.x / buffer.width
+        )
     );
 
-});
 
-function animate(time) {
+    const blobColor =
+    mixColor(
+        colorA,
+        colorB,
+        mouseMix
+    );
 
-    uniforms.uTime.value = time * 0.001;
 
-    renderer.render(scene, camera);
+
+
+    for(let y=0;y<buffer.height;y++){
+
+
+        for(let x=0;x<buffer.width;x++){
+
+
+
+            let field=0;
+
+
+
+            for(const b of blobs){
+
+
+                let dx=x-b.x;
+                let dy=y-b.y;
+
+
+
+                field +=
+                (b.r*b.r) /
+                (dx*dx+dy*dy+1);
+
+
+            }
+
+
+
+
+            let inside =
+            field > 1.2;
+
+
+
+            let outline =
+            field > (1.2-STROKE_SIZE)
+            &&
+            !inside;
+
+
+
+            let i =
+            (y*buffer.width+x)*4;
+
+
+
+            if(inside){
+
+
+                data[i]=blobColor.r;
+                data[i+1]=blobColor.g;
+                data[i+2]=blobColor.b;
+
+
+            }
+            else if(outline){
+
+
+                data[i]=stroke.r;
+                data[i+1]=stroke.g;
+                data[i+2]=stroke.b;
+
+
+            }
+            else{
+
+
+                data[i]=colorF.r;
+                data[i+1]=colorF.g;
+                data[i+2]=colorF.b;
+
+
+            }
+
+
+            data[i+3]=255;
+
+
+        }
+
+
+    }
+
+
+
+    bctx.putImageData(img,0,0);
+
+
+
+    ctx.clearRect(
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+    ctx.drawImage(
+        buffer,
+        0,
+        0,
+        canvas.width,
+        canvas.height
+    );
+
+
+}
+
+
+
+
+
+function animate(){
+
+    physics();
+
+    draw();
 
     requestAnimationFrame(animate);
 
 }
 
-requestAnimationFrame(animate);
+
+
+animate();

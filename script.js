@@ -18,9 +18,9 @@ const STROKE_SIZE = 0.08;
 const BLOB_SPEED = 3;
 
 
-const BLOB_COUNT = 13;
+const BLOB_COUNT = 8;
 
-const SCALE = 10;
+const SCALE = 0.6;
 
 const FIELD_THRESHOLD = 1.2;
 
@@ -33,35 +33,23 @@ const bctx = buffer.getContext("2d");
 
 function resize(){
 
-    const dpr = window.devicePixelRatio || 1;
+    canvas.width = innerWidth;
+    canvas.height = innerHeight;
 
 
-    canvas.width = window.innerWidth * dpr;
-    canvas.height = window.innerHeight * dpr;
+    buffer.width =
+    Math.floor(canvas.width*SCALE);
 
 
-    canvas.style.width = window.innerWidth + "px";
-    canvas.style.height = window.innerHeight + "px";
+    buffer.height =
+    Math.floor(canvas.height*SCALE);
 
 
-    ctx.setTransform(
-        dpr,
-        0,
-        0,
-        dpr,
-        0,
-        0
-    );
-
-
-buffer.width =
-Math.floor(canvas.width*SCALE);
-
-buffer.height =
-Math.floor(canvas.height*SCALE);
-
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality="high";
 
 }
+
 resize();
 
 window.addEventListener("resize", resize);

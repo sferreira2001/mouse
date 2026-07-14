@@ -20,7 +20,7 @@ const BLOB_SPEED = 3;
 
 const BLOB_COUNT = 13;
 
-const SCALE = 2;
+const SCALE = 10;
 
 const FIELD_THRESHOLD = 1.2;
 

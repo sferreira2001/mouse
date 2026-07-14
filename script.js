@@ -35,21 +35,44 @@ function resize(){
 
     const dpr = window.devicePixelRatio || 1;
 
-    canvas.width = innerWidth * dpr;
-    canvas.height = innerHeight * dpr;
 
-    canvas.style.width = innerWidth + "px";
-    canvas.style.height = innerHeight + "px";
+    canvas.style.width = window.innerWidth + "px";
+    canvas.style.height = window.innerHeight + "px";
 
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    buffer.width = Math.floor(innerWidth * SCALE);
-    buffer.height = Math.floor(innerHeight * SCALE);
+    canvas.width =
+    Math.floor(window.innerWidth * dpr);
+
+
+    canvas.height =
+    Math.floor(window.innerHeight * dpr);
+
+
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+
+
+    buffer.width =
+    Math.floor(window.innerWidth);
+
+
+    buffer.height =
+    Math.floor(window.innerHeight);
+
+
 
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
-}
 
+}
 resize();
 
 window.addEventListener("resize", resize);

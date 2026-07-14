@@ -19,7 +19,6 @@ const BLOB_SPEED = 2;
 
 const BLOB_COUNT = 15;
 
-// lower resolution on mobile
 const SCALE = window.innerWidth < 600 ? 0.5 : 0.8;
 
 const FIELD_THRESHOLD = 1.2;
@@ -46,7 +45,8 @@ function resize(){
 
 resize();
 
-addEventListener("resize", resize);
+window.addEventListener("resize", resize);
+
 
 
 
@@ -60,25 +60,20 @@ function hexToRgb(hex){
     hex = hex.replace("#","");
 
     return {
-
         r:parseInt(hex.substring(0,2),16),
         g:parseInt(hex.substring(2,4),16),
         b:parseInt(hex.substring(4,6),16)
-
     };
 
 }
 
 
-
 function mixColor(a,b,t){
 
     return {
-
         r:a.r+(b.r-a.r)*t,
         g:a.g+(b.g-a.g)*t,
         b:a.b+(b.b-a.b)*t
-
     };
 
 }
@@ -87,9 +82,7 @@ function mixColor(a,b,t){
 
 const colorA = hexToRgb(BLOB_COLOR_A);
 const colorB = hexToRgb(BLOB_COLOR_B);
-
 const stroke = hexToRgb(STROKE_COLOR);
-
 const colorF = hexToRgb(FUNDO_COLOR);
 
 
@@ -101,7 +94,7 @@ const colorF = hexToRgb(FUNDO_COLOR);
 // BLOBS
 // =============================
 
-const blobs = [];
+const blobs=[];
 
 
 for(let i=0;i<BLOB_COUNT;i++){
@@ -143,35 +136,42 @@ updateRadius();
 
 
 // =============================
-// MOUSE + TOUCH
+// INTERACTION
 // =============================
 
-let mouse = {
-
+let mouse={
     x:0,
     y:0
-
 };
 
 
-let dragging = null;
+let dragging=null;
 
 
 
 function updatePointer(x,y){
 
+    const rect = canvas.getBoundingClientRect();
 
-    mouse.x = x * SCALE;
-    mouse.y = y * SCALE;
+
+    mouse.x =
+    ((x - rect.left) / rect.width)
+    * buffer.width;
+
+
+    mouse.y =
+    ((y - rect.top) / rect.height)
+    * buffer.height;
 
 
 
     if(dragging !== null){
 
-        let b = blobs[dragging];
+        const b = blobs[dragging];
 
-        b.x += (mouse.x-b.x)*0.25;
-        b.y += (mouse.y-b.y)*0.25;
+
+        b.x += (mouse.x-b.x)*0.35;
+        b.y += (mouse.y-b.y)*0.35;
 
     }
 
@@ -179,23 +179,23 @@ function updatePointer(x,y){
 
 
 
+
 function startDrag(){
 
-
-    let best = Infinity;
+    let best=Infinity;
 
 
     blobs.forEach((b,i)=>{
 
 
-        const d = Math.hypot(
+        const d=Math.hypot(
             mouse.x-b.x,
             mouse.y-b.y
         );
 
 
         if(
-            d < b.r &&
+            d < b.r * 1.5 &&
             d < best
         ){
 
@@ -221,7 +221,7 @@ function stopDrag(){
 
 
 
-// Desktop
+// desktop mouse
 
 canvas.addEventListener(
 "mousemove",
@@ -268,14 +268,14 @@ canvas.addEventListener(
 
 
 
-
-// Mobile
+// mobile touch
 
 canvas.addEventListener(
 "touchstart",
 e=>{
 
     e.preventDefault();
+
 
     const touch=e.touches[0];
 
@@ -293,7 +293,6 @@ e=>{
 {
     passive:false
 });
-
 
 
 
@@ -322,7 +321,6 @@ e=>{
 
 
 
-
 canvas.addEventListener(
 "touchend",
 ()=>{
@@ -337,22 +335,20 @@ canvas.addEventListener(
 
 
 
+
 // =============================
 // PHYSICS
 // =============================
 
 function physics(){
 
-
     blobs.forEach((b,i)=>{
 
 
         if(i!==dragging){
 
-
-            b.x += b.vx * BLOB_SPEED;
-            b.y += b.vy * BLOB_SPEED;
-
+            b.x += b.vx*BLOB_SPEED;
+            b.y += b.vy*BLOB_SPEED;
 
         }
 
@@ -362,7 +358,7 @@ function physics(){
             b.x<b.r ||
             b.x>buffer.width-b.r
         )
-            b.vx *= -1;
+            b.vx*=-1;
 
 
 
@@ -370,14 +366,14 @@ function physics(){
             b.y<b.r ||
             b.y>buffer.height-b.r
         )
-            b.vy *= -1;
+            b.vy*=-1;
 
 
 
     });
 
-
 }
+
 
 
 
@@ -389,7 +385,6 @@ function physics(){
 // =============================
 
 function draw(){
-
 
     const img=bctx.createImageData(
         buffer.width,
@@ -412,7 +407,8 @@ function draw(){
 
 
 
-    const blobColor=mixColor(
+    const blobColor =
+    mixColor(
         colorA,
         colorB,
         mouseMix
@@ -444,6 +440,7 @@ function draw(){
                 const dy=y-b.y;
 
 
+
                 field +=
                 b.r2 /
                 (dx*dx+dy*dy+1);
@@ -453,7 +450,7 @@ function draw(){
 
 
 
-            let i=(y*width+x)*4;
+            const i=(y*width+x)*4;
 
 
 
@@ -522,7 +519,6 @@ function draw(){
         canvas.height
     );
 
-
 }
 
 
@@ -534,7 +530,6 @@ function draw(){
 // =============================
 
 let lastPhysics=0;
-
 
 
 function animate(time){
@@ -555,9 +550,7 @@ function animate(time){
 
     requestAnimationFrame(animate);
 
-
 }
-
 
 
 requestAnimationFrame(animate);

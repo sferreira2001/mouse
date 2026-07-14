@@ -24,7 +24,7 @@ const MOBILE = window.innerWidth < 600;
 
 const BLOB_COUNT = MOBILE ? 8 : 15;
 
-const SCALE = MOBILE ? 0.1 : 0.6;
+const SCALE = MOBILE ? 0.01 : 0.6;
 
 const FIELD_THRESHOLD = 1.2;
 

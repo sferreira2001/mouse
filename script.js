@@ -18,13 +18,9 @@ const STROKE_SIZE = 0.08;
 const BLOB_SPEED = 3;
 
 
-// responsive settings
+const BLOB_COUNT = 8;
 
-const MOBILE = window.innerWidth < 900;
-
-const BLOB_COUNT = MOBILE ? 8 : 8;
-
-const SCALE = MOBILE ? 0.4 : 0.4;
+const SCALE = 0.6;
 
 const FIELD_THRESHOLD = 1.2;
 
@@ -106,8 +102,8 @@ const colorF = hexToRgb(FUNDO_COLOR);
 const blobs = [];
 
 
-const MIN_BLOB_SIZE = MOBILE ? 15 : 30;
-const MAX_BLOB_SIZE = MOBILE ? 45 : 100;
+const MIN_BLOB_SIZE = 30;
+const MAX_BLOB_SIZE = 100;
 
 
 

@@ -49,8 +49,6 @@ window.addEventListener("resize", resize);
 
 
 
-
-
 // =============================
 // COLORS
 // =============================
@@ -68,6 +66,7 @@ function hexToRgb(hex){
 }
 
 
+
 function mixColor(a,b,t){
 
     return {
@@ -82,11 +81,10 @@ function mixColor(a,b,t){
 
 const colorA = hexToRgb(BLOB_COLOR_A);
 const colorB = hexToRgb(BLOB_COLOR_B);
+
 const stroke = hexToRgb(STROKE_COLOR);
+
 const colorF = hexToRgb(FUNDO_COLOR);
-
-
-
 
 
 
@@ -133,8 +131,6 @@ updateRadius();
 
 
 
-
-
 // =============================
 // INTERACTION
 // =============================
@@ -155,20 +151,28 @@ function updatePointer(x,y){
 
 
     mouse.x =
-    ((x - rect.left) / rect.width)
-    * buffer.width;
+    ((x-rect.left)/rect.width)
+    *buffer.width;
 
 
     mouse.y =
-    ((y - rect.top) / rect.height)
-    * buffer.height;
+    ((y-rect.top)/rect.height)
+    *buffer.height;
 
 
 
-    if(dragging !== null){
+    if(dragging!==null){
 
-        const b = blobs[dragging];
+        const b=blobs[dragging];
 
+
+        // momentum from dragging
+
+        b.vx=(mouse.x-b.x)*0.12;
+        b.vy=(mouse.y-b.y)*0.12;
+
+
+        // smooth follow
 
         b.x += (mouse.x-b.x)*0.35;
         b.y += (mouse.y-b.y)*0.35;
@@ -179,14 +183,12 @@ function updatePointer(x,y){
 
 
 
-
 function startDrag(){
 
     let best=Infinity;
 
 
     blobs.forEach((b,i)=>{
-
 
         const d=Math.hypot(
             mouse.x-b.x,
@@ -195,8 +197,8 @@ function startDrag(){
 
 
         if(
-            d < b.r * 1.5 &&
-            d < best
+            d<b.r*1.5 &&
+            d<best
         ){
 
             best=d;
@@ -204,9 +206,7 @@ function startDrag(){
 
         }
 
-
     });
-
 
 }
 
@@ -220,55 +220,41 @@ function stopDrag(){
 
 
 
-
-// desktop mouse
+// mouse
 
 canvas.addEventListener(
 "mousemove",
 e=>{
-
     updatePointer(
         e.clientX,
         e.clientY
     );
-
 });
-
 
 
 canvas.addEventListener(
 "mousedown",
 ()=>{
-
     startDrag();
-
 });
-
 
 
 canvas.addEventListener(
 "mouseup",
 ()=>{
-
     stopDrag();
-
 });
-
 
 
 canvas.addEventListener(
 "mouseleave",
 ()=>{
-
     stopDrag();
-
 });
 
 
 
-
-
-// mobile touch
+// touch
 
 canvas.addEventListener(
 "touchstart",
@@ -276,25 +262,19 @@ e=>{
 
     e.preventDefault();
 
-
-    const touch=e.touches[0];
-
+    const t=e.touches[0];
 
     updatePointer(
-        touch.clientX,
-        touch.clientY
+        t.clientX,
+        t.clientY
     );
 
-
     startDrag();
-
 
 },
 {
     passive:false
 });
-
-
 
 
 canvas.addEventListener(
@@ -303,15 +283,12 @@ e=>{
 
     e.preventDefault();
 
-
-    const touch=e.touches[0];
-
+    const t=e.touches[0];
 
     updatePointer(
-        touch.clientX,
-        touch.clientY
+        t.clientX,
+        t.clientY
     );
-
 
 },
 {
@@ -319,23 +296,11 @@ e=>{
 });
 
 
-
-
 canvas.addEventListener(
 "touchend",
 ()=>{
-
     stopDrag();
-
 });
-
-
-
-
-
-
-
-
 // =============================
 // PHYSICS
 // =============================
@@ -345,29 +310,75 @@ function physics(){
     blobs.forEach((b,i)=>{
 
 
-        if(i!==dragging){
+        if(i !== dragging){
 
-            b.x += b.vx*BLOB_SPEED;
-            b.y += b.vy*BLOB_SPEED;
+
+            b.x += b.vx * BLOB_SPEED;
+            b.y += b.vy * BLOB_SPEED;
+
+
+            // friction / momentum loss
+
+            b.vx *= 0.985;
+            b.vy *= 0.985;
+
+
+
+            // prevent complete freezing
+
+            if(Math.abs(b.vx)<0.03)
+                b.vx += (Math.random()-0.5)*0.01;
+
+
+            if(Math.abs(b.vy)<0.03)
+                b.vy += (Math.random()-0.5)*0.01;
+
 
         }
 
 
 
-        if(
-            b.x<b.r ||
-            b.x>buffer.width-b.r
-        )
-            b.vx*=-1;
+        // left wall
+
+        if(b.x < b.r){
+
+            b.x = b.r;
+            b.vx *= -0.8;
+
+        }
 
 
 
-        if(
-            b.y<b.r ||
-            b.y>buffer.height-b.r
-        )
-            b.vy*=-1;
+        // right wall
 
+        if(b.x > buffer.width-b.r){
+
+            b.x = buffer.width-b.r;
+            b.vx *= -0.8;
+
+        }
+
+
+
+        // top wall
+
+        if(b.y < b.r){
+
+            b.y = b.r;
+            b.vy *= -0.8;
+
+        }
+
+
+
+        // bottom wall
+
+        if(b.y > buffer.height-b.r){
+
+            b.y = buffer.height-b.r;
+            b.vy *= -0.8;
+
+        }
 
 
     });
@@ -386,6 +397,7 @@ function physics(){
 
 function draw(){
 
+
     const img=bctx.createImageData(
         buffer.width,
         buffer.height
@@ -395,6 +407,8 @@ function draw(){
     const data=img.data;
 
 
+
+    // mouse controls colour
 
     const mouseMix =
     Math.max(
@@ -407,8 +421,7 @@ function draw(){
 
 
 
-    const blobColor =
-    mixColor(
+    const blobColor=mixColor(
         colorA,
         colorB,
         mouseMix
@@ -450,43 +463,49 @@ function draw(){
 
 
 
-            const i=(y*width+x)*4;
+            const index =
+            (y*width+x)*4;
 
 
 
             if(field>FIELD_THRESHOLD){
 
 
-                data[i]=blobColor.r;
-                data[i+1]=blobColor.g;
-                data[i+2]=blobColor.b;
+                data[index]=blobColor.r;
+                data[index+1]=blobColor.g;
+                data[index+2]=blobColor.b;
 
 
             }
+
+
             else if(
                 field >
                 FIELD_THRESHOLD-STROKE_SIZE
             ){
 
 
-                data[i]=stroke.r;
-                data[i+1]=stroke.g;
-                data[i+2]=stroke.b;
+                data[index]=stroke.r;
+                data[index+1]=stroke.g;
+                data[index+2]=stroke.b;
 
 
             }
+
+
             else{
 
 
-                data[i]=colorF.r;
-                data[i+1]=colorF.g;
-                data[i+2]=colorF.b;
+                data[index]=colorF.r;
+                data[index+1]=colorF.g;
+                data[index+2]=colorF.b;
 
 
             }
 
 
-            data[i+3]=255;
+
+            data[index+3]=255;
 
 
         }
@@ -511,6 +530,7 @@ function draw(){
     );
 
 
+
     ctx.drawImage(
         buffer,
         0,
@@ -519,7 +539,10 @@ function draw(){
         canvas.height
     );
 
+
 }
+
+
 
 
 
@@ -534,6 +557,8 @@ let lastPhysics=0;
 
 function animate(time){
 
+
+    // physics slightly slower than rendering
 
     if(time-lastPhysics>20){
 
@@ -551,6 +576,7 @@ function animate(time){
     requestAnimationFrame(animate);
 
 }
+
 
 
 requestAnimationFrame(animate);

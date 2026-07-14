@@ -20,7 +20,7 @@ const BLOB_SPEED = 3;
 
 // responsive settings
 
-const MOBILE = window.innerWidth < 1080;
+const MOBILE = window.innerWidth < 100080;
 
 const BLOB_COUNT = MOBILE ? 8 : 15;
 

@@ -18,7 +18,7 @@ const STROKE_SIZE = 0.08;
 const BLOB_SPEED = 3;
 
 
-const BLOB_COUNT = 8;
+const BLOB_COUNT = 13;
 
 const SCALE = 0.6;
 

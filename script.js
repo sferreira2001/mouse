@@ -36,17 +36,12 @@ function resize(){
     const dpr = window.devicePixelRatio || 1;
 
 
+    canvas.width = window.innerWidth * dpr;
+    canvas.height = window.innerHeight * dpr;
+
+
     canvas.style.width = window.innerWidth + "px";
     canvas.style.height = window.innerHeight + "px";
-
-
-    canvas.width =
-    Math.floor(window.innerWidth * dpr);
-
-
-    canvas.height =
-    Math.floor(window.innerHeight * dpr);
-
 
 
     ctx.setTransform(
@@ -59,18 +54,12 @@ function resize(){
     );
 
 
+buffer.width =
+Math.floor(canvas.width*SCALE);
 
-    buffer.width =
-    Math.floor(window.innerWidth);
+buffer.height =
+Math.floor(canvas.height*SCALE);
 
-
-    buffer.height =
-    Math.floor(window.innerHeight);
-
-
-
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
 
 }
 resize();

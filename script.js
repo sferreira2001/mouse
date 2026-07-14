@@ -17,9 +17,14 @@ const STROKE_SIZE = 0.08;
 
 const BLOB_SPEED = 2;
 
-const BLOB_COUNT = 15;
 
-const SCALE = window.innerWidth < 600 ? 0.5 : 0.8;
+// responsive settings
+
+const MOBILE = window.innerWidth < 600;
+
+const BLOB_COUNT = MOBILE ? 8 : 15;
+
+const SCALE = MOBILE ? 0.45 : 1;
 
 const FIELD_THRESHOLD = 1.2;
 
@@ -35,11 +40,17 @@ function resize(){
     canvas.width = innerWidth;
     canvas.height = innerHeight;
 
-    buffer.width = Math.floor(canvas.width * SCALE);
-    buffer.height = Math.floor(canvas.height * SCALE);
 
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
+    buffer.width =
+    Math.floor(canvas.width*SCALE);
+
+
+    buffer.height =
+    Math.floor(canvas.height*SCALE);
+
+
+    ctx.imageSmoothingEnabled=true;
+    ctx.imageSmoothingQuality="high";
 
 }
 
@@ -95,7 +106,17 @@ const colorF = hexToRgb(FUNDO_COLOR);
 const blobs=[];
 
 
+const MIN_BLOB_SIZE = MOBILE ? 25 : 50;
+const MAX_BLOB_SIZE = MOBILE ? 70 : 140;
+
+
+
 for(let i=0;i<BLOB_COUNT;i++){
+
+    const radius =
+    MIN_BLOB_SIZE +
+    Math.random()*MAX_BLOB_SIZE;
+
 
     blobs.push({
 
@@ -105,9 +126,9 @@ for(let i=0;i<BLOB_COUNT;i++){
         vx:(Math.random()-.5)*0.8,
         vy:(Math.random()-.5)*0.8,
 
-        r:30+Math.random()*100,
+        r:radius,
 
-        r2:0
+        r2:radius*radius
 
     });
 
